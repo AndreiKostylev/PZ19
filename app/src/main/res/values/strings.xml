@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">PZ19</string>
-    <string name="widget_name">Название виджета</string>
+    <string name="app_name">Погода Виджет</string>
+    <string name="widget_name">Погодный виджет</string>
     <string name="widget_text">Текст отображаемый виджетом</string>
+    <string name="yandex_weather_api_key">00705c3e-b69a-4113-9331-2b4fe0fa0af3</string>
 </resources>
