@@ -1,29 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp"
-    android:gravity="center"
+    android:background="#f5f5f5"
     tools:context=".MainActivity">
 
+    <!-- Город и страна -->
     <TextView
-        android:id="@+id/weather"
-        android:layout_width="match_parent"
+        android:id="@+id/city_field"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Загрузка погоды..."
-        android:textSize="18sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="ГОРОД"
+        android:textColor="#1976D2"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginTop="30dp" />
+
+    <!-- Время последнего обновления -->
+    <TextView
+        android:id="@+id/updated_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/city_field"
+        android:layout_centerHorizontal="true"
+        android:text="время последнего обновления"
+        android:textColor="#757575"
+        android:textSize="14sp"
+        android:layout_marginTop="10dp" />
+
+    <!-- Иконка погоды -->
+    <ImageView
+        android:id="@+id/weather_icon"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_centerInParent="true"
+        android:contentDescription="Иконка погоды"
+        android:scaleType="fitCenter" />
+
+    <!-- Детали погоды -->
+    <TextView
+        android:id="@+id/details_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/weather_icon"
+        android:layout_centerHorizontal="true"
+        android:text="краткое описание\nвлажность\nдавление\nветер"
+        android:textColor="#424242"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:lineSpacingExtra="4dp" />
+
+    <!-- Температура -->
+    <TextView
+        android:id="@+id/current_temperature_field"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="температура"
+        android:textColor="#D32F2F"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:gravity="center"
-        android:lineSpacingExtra="8dp"
-        android:padding="16dp" />
+        android:layout_marginBottom="30dp" />
 
+    <!-- Кнопка смены города -->
     <Button
         android:id="@+id/refreshButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_above="@id/current_temperature_field"
+        android:layout_centerHorizontal="true"
         android:text="Следующий город"
-        android:layout_marginTop="16dp" />
+        android:layout_marginBottom="20dp" />
 
-</LinearLayout>
+</RelativeLayout>

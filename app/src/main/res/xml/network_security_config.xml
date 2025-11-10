@@ -3,5 +3,6 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">api.weather.yandex.ru</domain>
         <domain includeSubdomains="true">yandex.ru</domain>
+        <domain includeSubdomains="true">yastatic.net</domain>
     </domain-config>
 </network-security-config>

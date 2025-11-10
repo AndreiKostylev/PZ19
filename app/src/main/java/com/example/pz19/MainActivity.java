@@ -5,14 +5,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 import org.json.JSONObject;
 import android.util.Log;
+import com.bumptech.glide.Glide;
 
 public class MainActivity extends AppCompatActivity {
 
     private Handler handler;
-    private TextView weatherTextView;
+    private TextView cityField, updatedField, detailsField, temperatureField;
+    private ImageView weatherIcon;
     private Button refreshButton;
     private int currentCityIndex = 0;
 
@@ -24,66 +27,97 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         handler = new Handler();
-        weatherTextView = findViewById(R.id.weather);
+
+
+        cityField = findViewById(R.id.city_field);
+        updatedField = findViewById(R.id.updated_field);
+        detailsField = findViewById(R.id.details_field);
+        temperatureField = findViewById(R.id.current_temperature_field);
+        weatherIcon = findViewById(R.id.weather_icon);
         refreshButton = findViewById(R.id.refreshButton);
 
 
-        updateWeatherData(currentCityIndex);
+        cityField.setText("Загрузка...");
+        updatedField.setText("Подключение к Яндекс.Погоде");
+        detailsField.setText("Получение данных...");
+        temperatureField.setText("-- °C");
 
 
         refreshButton.setOnClickListener(v -> {
             currentCityIndex = (currentCityIndex + 1) % 6;
+            Log.d(LOG_TAG, "🔄 Switching to city index: " + currentCityIndex);
             updateWeatherData(currentCityIndex);
         });
+
+
+        handler.postDelayed(() -> {
+            updateWeatherData(0);
+        }, 1000);
     }
 
     private void updateWeatherData(final int cityIndex) {
-        weatherTextView.setText("Загрузка погоды...\n\nПодключение к Яндекс.Погоде");
+        String[] cityNames = {"Москва", "Санкт-Петербург", "Казань", "Екатеринбург", "Новосибирск", "Оренбург"};
+
+
+        cityField.setText("Загрузка: " + cityNames[cityIndex]);
+        updatedField.setText("Обновление...");
+        detailsField.setText("Получение данных с сервера");
+        temperatureField.setText("...");
 
         new Thread() {
             public void run() {
-                Log.d(LOG_TAG, "Fetching weather for city index: " + cityIndex);
-                final JSONObject json = ConnectFetch.getWeatherData(MainActivity.this, cityIndex);
+                try {
+                    Log.d(LOG_TAG, "📍 Starting API request for: " + cityNames[cityIndex]);
+                    final JSONObject json = ConnectFetch.getWeatherData(MainActivity.this, cityIndex);
 
-                handler.post(new Runnable() {
-                    public void run() {
-                        if (json != null) {
-                            renderWeather(json);
-                        } else {
-                            weatherTextView.setText("Ошибка загрузки данных\nПроверьте API ключ");
-                            Toast.makeText(MainActivity.this,
-                                    "Не удалось получить данные от Яндекс.Погоды",
-                                    Toast.LENGTH_LONG).show();
+                    handler.post(new Runnable() {
+                        public void run() {
+                            if (json != null) {
+                                renderWeather(json);
+                            } else {
+                                showError();
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "💥 Thread exception: " + e.getMessage());
+                    handler.post(() -> showError());
+                }
             }
         }.start();
     }
 
     private void renderWeather(JSONObject json) {
         try {
-            String cityName = json.getString("city_name");
-            JSONObject fact = json.getJSONObject("fact");
 
-            int temp = fact.getInt("temp");
-            int feelsLike = fact.getInt("feels_like");
-            String condition = ConnectFetch.getConditionText(fact.getString("condition"));
-            int humidity = fact.getInt("humidity");
-            int pressure = fact.getInt("pressure_mm");
-            double windSpeed = fact.getDouble("wind_speed");
+            cityField.setText(StaticWeatherAnalize.getCityField(json));
+            updatedField.setText(StaticWeatherAnalize.getLastUpdateTime(json));
+            detailsField.setText(StaticWeatherAnalize.getDetailsField(json));
+            temperatureField.setText(StaticWeatherAnalize.getTemperatureField(json));
 
-            String weatherText = String.format(
-                    "🏙 %s\n\n🌡 Температура: %d°C\n🥶 Ощущается как: %d°C\n☁ Погода: %s\n💧 Влажность: %d%%\n📊 Давление: %d мм рт.ст.\n💨 Ветер: %.1f м/с",
-                    cityName, temp, feelsLike, condition, humidity, pressure, windSpeed
-            );
 
-            weatherTextView.setText(weatherText);
-            Log.d(LOG_TAG, "Weather displayed for: " + cityName);
+            String iconUrl = StaticWeatherAnalize.getIconUrl(json);
+            Log.d(LOG_TAG, "🖼 Loading icon from: " + iconUrl);
+
+            Glide.with(this)
+                    .load(iconUrl)
+                    .placeholder(R.drawable.ic_launcher_foreground)
+                    .error(R.drawable.ic_launcher_foreground)
+                    .into(weatherIcon);
+
+            Log.d(LOG_TAG, "✅ Weather data rendered successfully");
 
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Error rendering weather: " + e.getMessage());
-            weatherTextView.setText("Ошибка обработки данных\n" + e.getMessage());
+            Log.e(LOG_TAG, "❌ Error rendering weather: " + e.getMessage());
+            showError();
         }
+    }
+
+    private void showError() {
+        cityField.setText("Ошибка загрузки");
+        updatedField.setText("Проверьте подключение");
+        detailsField.setText("Нет данных\nПопробуйте еще раз");
+        temperatureField.setText("-- °C");
+        Toast.makeText(this, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show();
     }
 }
