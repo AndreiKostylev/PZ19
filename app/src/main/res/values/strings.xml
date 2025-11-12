@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Погода Виджет</string>
-    <string name="widget_name">Погодный виджет</string>
-    <string name="widget_text">Текст отображаемый виджетом</string>
+    <string name="app_name">Погода</string>
+    <string name="widget_text">Погода</string>
+    <string name="app_widget_description">Виджет погоды для Москвы</string>
     <string name="yandex_weather_api_key">00705c3e-b69a-4113-9331-2b4fe0fa0af3</string>
 </resources>

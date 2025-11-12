@@ -8,19 +8,20 @@
     tools:context=".MainActivity">
 
     <!-- Город и страна -->
+
+    <!-- Время последнего обновления -->
+
     <TextView
         android:id="@+id/city_field"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
+        android:layout_marginTop="111dp"
         android:text="ГОРОД"
         android:textColor="#1976D2"
         android:textSize="28sp"
-        android:textStyle="bold"
-        android:layout_marginTop="30dp" />
+        android:textStyle="bold" />
 
-    <!-- Время последнего обновления -->
     <TextView
         android:id="@+id/updated_field"
         android:layout_width="wrap_content"
