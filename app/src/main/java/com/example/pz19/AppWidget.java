@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
@@ -13,40 +14,65 @@ import java.util.Arrays;
 public class AppWidget extends AppWidgetProvider {
     static final String LOG_TAG = "myLogs";
 
+    // ОСНОВНОЙ МЕТОД для обновления виджета (без SharedPreferences)
     static void updateAppWidget(final Context context, final AppWidgetManager appWidgetManager,
                                 final int appWidgetId) {
 
+        // Читаем настройки для этого виджета
+        SharedPreferences sp = context.getSharedPreferences(ConfigActivity.WIDGET_PREF, Context.MODE_PRIVATE);
+        String widgetCity = sp.getString(ConfigActivity.WIDGET_CITY + appWidgetId, "Москва");
+
+        updateAppWidgetInternal(context, widgetCity, appWidgetManager, appWidgetId);
+    }
+
+    // МЕТОД для ConfigActivity (с SharedPreferences)
+    public static void updateAppWidget(Context context, SharedPreferences sharedPreferences,
+                                       AppWidgetManager appWidgetManager, int appWidgetId) {
+        // Читаем параметры Preferences
+        String widgetCity = sharedPreferences.getString(ConfigActivity.WIDGET_CITY + appWidgetId, null);
+        if (widgetCity == null) {
+            Log.e(LOG_TAG, "❌ No city found for widget: " + appWidgetId);
+            return;
+        }
+
+        Log.d(LOG_TAG, "🔧 Configuring widget " + appWidgetId + " for city: " + widgetCity);
+        updateAppWidgetInternal(context, widgetCity, appWidgetManager, appWidgetId);
+    }
+
+    // ВНУТРЕННИЙ МЕТОД для обновления с конкретным городом
+    private static void updateAppWidgetInternal(final Context context, final String city,
+                                                final AppWidgetManager appWidgetManager, final int appWidgetId) {
         final RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.app_widget);
 
-        // НАСТРАИВАЕМ КЛИК ДО ЗАГРУЗКИ ДАННЫХ
+        // Настраиваем клик для открытия приложения
         setupClickIntent(context, views);
 
-        // Показываем загрузку
-        views.setTextViewText(R.id.city_field, "Загрузка...");
-        views.setTextViewText(R.id.details_field, "");
+        // Устанавливаем начальные значения
+        views.setTextViewText(R.id.city_field, city);
+        views.setTextViewText(R.id.details_field, "Загрузка...");
+
+        // Сразу обновляем виджет с заглушкой
         appWidgetManager.updateAppWidget(appWidgetId, views);
 
-        // Используем анонимный класс для получения данных
-        ConnectFetch.loadWeatherData(context, "Москва", new OnConnectionCompleteListener() {
+        // Загружаем актуальные данные
+        ConnectFetch.loadWeatherData(context, city, new OnConnectionCompleteListener() {
             @Override
             public void onSuccess(JSONObject response) {
-                // Успех - обновляем виджет с данными
                 renderWeather(response, context, views, appWidgetId);
                 appWidgetManager.updateAppWidget(appWidgetId, views);
-                Log.d(LOG_TAG, "✅ Widget updated successfully");
+                Log.d(LOG_TAG, "✅ Widget updated successfully for: " + city);
             }
 
             @Override
             public void onFail(String message) {
-                // Ошибка - показываем сообщение
-                views.setTextViewText(R.id.city_field, "Москва");
                 views.setTextViewText(R.id.details_field, "Ошибка данных");
                 appWidgetManager.updateAppWidget(appWidgetId, views);
-                Log.e(LOG_TAG, "❌ Widget update failed: " + message);
+                Log.e(LOG_TAG, "❌ Widget update failed for " + city + ": " + message);
             }
         });
     }
 
+    // Отрисовка погоды в виджете
     private static void renderWeather(JSONObject json, Context context, RemoteViews remoteViews, int appWidgetId) {
         try {
             // Получаем город
@@ -62,16 +88,16 @@ public class AppWidget extends AppWidgetProvider {
             remoteViews.setTextViewText(R.id.city_field, cityName);
             remoteViews.setTextViewText(R.id.details_field, temp + "°C\n" + conditionText);
 
-            Log.d("AppWidget", "✅ Widget updated: " + cityName + " " + temp + "°C");
+            Log.d("AppWidget", "✅ Widget rendered: " + cityName + " " + temp + "°C");
 
         } catch (Exception e) {
-            Log.e("AppWidget", "❌ Error updating widget: " + e.getMessage());
+            Log.e("AppWidget", "❌ Error rendering widget: " + e.getMessage());
             remoteViews.setTextViewText(R.id.city_field, "Москва");
             remoteViews.setTextViewText(R.id.details_field, "Нет данных");
         }
     }
 
-    // МЕТОД ДЛЯ НАСТРОЙКИ КЛИКА - ВЫЗЫВАЕТСЯ ОТДЕЛЬНО
+    // Настройка клика по виджету
     private static void setupClickIntent(Context context, RemoteViews views) {
         try {
             Log.d(LOG_TAG, "🔗 Setting up click intent...");
@@ -114,6 +140,17 @@ public class AppWidget extends AppWidgetProvider {
     @Override
     public void onDeleted(Context context, int[] appWidgetIds) {
         super.onDeleted(context, appWidgetIds);
+
+        // Удаляем настройки удаленных виджетов
+        SharedPreferences.Editor editor = context.getSharedPreferences(
+                ConfigActivity.WIDGET_PREF, Context.MODE_PRIVATE).edit();
+
+        for (int widgetID : appWidgetIds) {
+            editor.remove(ConfigActivity.WIDGET_CITY + widgetID);
+            Log.d(LOG_TAG, "🗑️ Removed preferences for widget: " + widgetID);
+        }
+        editor.apply();
+
         Log.d(LOG_TAG, "onDeleted " + Arrays.toString(appWidgetIds));
     }
 
@@ -125,5 +162,13 @@ public class AppWidget extends AppWidgetProvider {
     @Override
     public void onDisabled(Context context) {
         Log.d(LOG_TAG, "onDisabled - all widgets removed from home screen");
+
+        // Очищаем все настройки виджетов
+        SharedPreferences.Editor editor = context.getSharedPreferences(
+                ConfigActivity.WIDGET_PREF, Context.MODE_PRIVATE).edit();
+        editor.clear();
+        editor.apply();
+
+        Log.d(LOG_TAG, "🧹 All widget preferences cleared");
     }
 }

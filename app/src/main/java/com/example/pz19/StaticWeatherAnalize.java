@@ -8,37 +8,34 @@ public class StaticWeatherAnalize {
 
     public static String getCityField(JSONObject json) {
         try {
-            // Пробуем получить город из поля city_name которое мы сами добавляем
+            Log.d("StaticWeatherAnalize", "🔍 Parsing city from JSON...");
+
+            // ПРОСТОЙ И НАДЕЖНЫЙ СПОСОБ - используем city_name который добавляет ConnectFetch
             if (json.has("city_name")) {
                 String cityName = json.getString("city_name");
+                Log.d("StaticWeatherAnalize", "✅ Found city_name: " + cityName);
                 return cityName.toUpperCase() + ", RU";
             }
 
-            // Если нет city_name, пробуем другие возможные поля
+            // Альтернативные варианты на случай если city_name нет
             if (json.has("geo_object")) {
                 JSONObject geoObject = json.getJSONObject("geo_object");
-                if (geoObject.has("locality") && geoObject.getJSONObject("locality").has("name")) {
+                if (geoObject.has("locality")) {
                     String cityName = geoObject.getJSONObject("locality").getString("name");
+                    Log.d("StaticWeatherAnalize", "✅ Found locality name: " + cityName);
                     return cityName.toUpperCase() + ", RU";
                 }
             }
 
-            // Альтернативный путь
-            if (json.has("info")) {
-                JSONObject info = json.getJSONObject("info");
-                if (info.has("tzinfo") && info.getJSONObject("tzinfo").has("name")) {
-                    String cityName = info.getJSONObject("tzinfo").getString("name");
-                    return cityName.toUpperCase() + ", RU";
-                }
-            }
+            // Если ничего не нашли
+            Log.e("StaticWeatherAnalize", "❌ No city found in JSON");
+            return "МОСКВА, RU";
 
         } catch (Exception e) {
+            Log.e("StaticWeatherAnalize", "💥 Error getting city: " + e.getMessage());
             e.printStackTrace();
-            Log.e("StaticWeatherAnalize", "Error getting city: " + e.getMessage());
+            return "МОСКВА, RU";
         }
-
-        // Если ничего не нашли, возвращаем значение по умолчанию
-        return "МОСКВА, RU";
     }
 
     public static String getLastUpdateTime(JSONObject json) {
